@@ -6,7 +6,6 @@ import {
   LandingHero,
   LandingHowItWorks,
   LandingPainPoints,
-  LandingPricing,
   LandingSocialProof,
   LandingSocialRating,
   LandingTestimonials,
@@ -100,40 +99,6 @@ export default function LandingPage() {
     },
   ]
 
-  const packages = [
-    {
-      title: `Starter`,
-      description: `Perfect for individuals and small teams getting started with AI`,
-      monthly: 29,
-      yearly: 290,
-      features: [`100 prompts/month`, `Basic templates`, `Email support`],
-    },
-    {
-      title: `Professional`,
-      description: `Ideal for growing businesses and power users`,
-      monthly: 79,
-      yearly: 790,
-      features: [
-        `Unlimited prompts`,
-        `Advanced templates`,
-        `Priority support`,
-        `Team collaboration`,
-      ],
-      highlight: true,
-    },
-    {
-      title: `Enterprise`,
-      description: `Custom solutions for large organizations`,
-      monthly: 199,
-      yearly: 1990,
-      features: [
-        `Custom prompt engineering`,
-        `API access`,
-        `Dedicated support`,
-        `Advanced analytics`,
-      ],
-    },
-  ]
 
   const questionAnswers = [
     {
@@ -218,12 +183,6 @@ export default function LandingPage() {
         title={`Join Thousands of Users Already Saving Hours on Prompt Engineering`}
         subtitle={`See how our AI prompt generator is transforming workflows`}
         testimonials={testimonials}
-      />
-      <LandingPricing
-        id="pricing"
-        title={`Start Optimizing Your AI Interactions Today`}
-        subtitle={`Choose the plan that fits your needs`}
-        packages={packages}
       />
       <LandingFAQ
         id="faq"

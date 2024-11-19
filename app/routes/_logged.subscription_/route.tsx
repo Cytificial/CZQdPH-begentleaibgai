@@ -1,34 +1,61 @@
-import { Typography, Card, Button, Row, Col, Tag, Spin, message } from 'antd'
+import { Typography, Card, Button, Row, Col, message, Modal, Flex } from 'antd'
 const { Title, Text } = Typography
 import { useUserContext } from '@/core/context'
-import dayjs from 'dayjs'
-import { useLocation, useNavigate, useParams } from '@remix-run/react'
-import { useUploadPublic } from '@/plugins/upload/client'
 import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem'
+import { useState } from 'react'
+import dayjs from 'dayjs'
+
+type SubscriptionPlan = {
+  id: string
+  name: string
+  price: string
+  features: string[]
+}
 
 export default function SubscriptionPage() {
   const { user } = useUserContext()
-
-  const { data: plans, isLoading: plansLoading } =
-    Api.subscriptionPlan.findMany.useQuery({})
-
-  const { data: subscription, isLoading: subscriptionLoading } =
-    Api.subscription.findFirst.useQuery({
-      where: { userId: user?.id },
-      include: { plan: true },
-      orderBy: { createdAt: 'desc' },
-    })
-
   const { mutateAsync: createSubscription } = Api.subscription.create.useMutation()
-  const { mutateAsync: createPaymentLink, isLoading: paymentLinkLoading } =
-    Api.billing.createPaymentLink.useMutation()
+  const { mutateAsync: createPaymentLink, isLoading: paymentLinkLoading } = Api.billing.createPaymentLink.useMutation()
+  const { data: subscription } = Api.subscription.findFirst.useQuery({
+    where: { userId: user?.id },
+    include: { plan: true },
+  })
 
-  const handleSubscribe = async (plan: any) => {
+  const [selectedPlan, setSelectedPlan] = useState(null)
+  const [confirmModalVisible, setConfirmModalVisible] = useState(false)
+
+  const plans = [
+    {
+      id: 'basic',
+      name: 'Basic',
+      price: '9.99',
+      features: ['5 AI prompts per day', 'Basic templates', 'Email support']
+    },
+    {
+      id: 'standard',
+      name: 'Standard',
+      price: '19.99',
+      features: ['20 AI prompts per day', 'Advanced templates', 'Priority support', 'Custom prompts']
+    },
+    {
+      id: 'pro',
+      name: 'Pro',
+      price: '49.99',
+      features: ['Unlimited AI prompts', 'Premium templates', '24/7 support', 'Custom prompts', 'API access']
+    }
+  ]
+  
+  const handleSubscribe = async (plan: SubscriptionPlan) => {
+    setSelectedPlan(plan)
+    setConfirmModalVisible(true)
+  }
+
+  const handleConfirmSubscription = async () => {
     try {
       await createSubscription({ 
         data: { 
-          planId: plan.id, 
+          planId: selectedPlan.id, 
           userId: user?.id as string, 
           status: 'active', 
           startDate: new Date().toISOString(), 
@@ -36,7 +63,9 @@ export default function SubscriptionPage() {
         } 
       })
       
-      const response = await createPaymentLink({ productId: plan.id })
+      const response = await createPaymentLink({ productId: selectedPlan.id })
+      setConfirmModalVisible(false)
+      
       if (typeof response === 'string') {
         window.location.href = response
       } else if (typeof response === 'object' && response.url) {
@@ -45,19 +74,17 @@ export default function SubscriptionPage() {
         message.error('Invalid payment link received')
       }
     } catch (error) {
-      message.error('Failed to create subscription')
+      const errorMessage = error?.message || 'Failed to create subscription'
+      if (error?.code === 'card_declined') {
+        message.error('Your card was declined. Please try another payment method.')
+      } else if (error?.code === 'expired_card') {
+        message.error('Your card has expired. Please update your payment details.')
+      } else {
+        message.error(errorMessage)
+      }
     }
   }
 
-  if (plansLoading || subscriptionLoading) {
-    return (
-      <PageLayout layout="narrow">
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-          <Spin size="large" />
-        </div>
-      </PageLayout>
-    )
-  }
 
   return (
     <PageLayout layout="narrow">
@@ -69,45 +96,12 @@ export default function SubscriptionPage() {
         <Text>Choose the perfect plan for your needs</Text>
       </div>
 
-      <Card style={{ marginBottom: '2rem', textAlign: 'center' }}>
-        <Title level={4}>
-          <i className="las la-coins" style={{ marginRight: '8px' }}></i>
-          Available Credits
-        </Title>
-        <Title level={2} style={{ margin: '16px 0' }}>
-          {user?.credits || 0}
-        </Title>
-        <Text>credits remaining</Text>
-      </Card>
-
-      {subscription && (
-        <Card style={{ marginBottom: '2rem', textAlign: 'center' }}>
-          <Title level={4}>
-            <i
-              className="las la-check-circle"
-              style={{ marginRight: '8px' }}
-            ></i>
-            Current Subscription
-          </Title>
-          <Text>Plan: {subscription.plan?.name}</Text>
-          <br />
-          <Text>
-            Status:{' '}
-            <Tag color={subscription.status === 'active' ? 'green' : 'orange'}>
-              {subscription.status}
-            </Tag>
-          </Text>
-          <br />
-          <Text>
-            Valid until: {dayjs(subscription.endDate).format('MMMM D, YYYY')}
-          </Text>
-        </Card>
-      )}
 
       <Row gutter={[16, 16]} justify="center">
         {plans?.map(plan => (
           <Col xs={24} sm={12} md={8} key={plan.id}>
             <Card
+              className={subscription?.plan?.id === plan.id ? 'border-2 border-blue-500' : ''}
               title={
                 <Title level={4} style={{ textAlign: 'center', margin: 0 }}>
                   {plan.name}
@@ -120,7 +114,6 @@ export default function SubscriptionPage() {
                   ${plan.price}
                   <Text style={{ fontSize: '14px' }}>/month</Text>
                 </Title>
-                <Text>{plan.credits} credits</Text>
                 <div style={{ margin: '16px 0' }}>
                   {(plan.features as string[])?.map((feature, index) => (
                     <div key={index} style={{ margin: '8px 0' }}>
@@ -146,6 +139,29 @@ export default function SubscriptionPage() {
           </Col>
         ))}
       </Row>
+
+
+      <Modal
+        title="Confirm Subscription"
+        open={confirmModalVisible}
+        onOk={handleConfirmSubscription}
+        onCancel={() => setConfirmModalVisible(false)}
+        confirmLoading={paymentLinkLoading}
+      >
+        <p>You are about to subscribe to the following plan:</p>
+        {selectedPlan && (
+          <>
+            <Title level={4}>{selectedPlan.name}</Title>
+            <p>Price: ${selectedPlan.price}/month</p>
+            <p>Features:</p>
+            <ul>
+              {(selectedPlan.features as string[])?.map((feature, index) => (
+                <li key={index}>{feature}</li>
+              ))}
+            </ul>
+          </>
+        )}
+      </Modal>
     </PageLayout>
   )
 }

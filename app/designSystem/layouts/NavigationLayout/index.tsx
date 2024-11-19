@@ -45,15 +45,6 @@ export const NavigationLayout: React.FC<Props> = ({ children }) => {
 
       onClick: () => goTo('/my-prompts'),
     },
-
-    {
-      key: '/pricing',
-      label: 'Pricing',
-
-      position: 'topbar',
-
-      onClick: () => goTo('/pricing'),
-    },
   ]
 
   const itemsVisible = items

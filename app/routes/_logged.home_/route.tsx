@@ -41,6 +41,7 @@ export default function HomePage() {
   // Mutations
   const { mutateAsync: generatePrompt } = Api.ai.generateText.useMutation()
   const { mutateAsync: createPrompt } = Api.prompt.create.useMutation()
+  const { mutateAsync: updateUser } = Api.user.update.useMutation()
 
   const handleGeneratePrompt = async () => {
     if (!description) {
@@ -68,7 +69,7 @@ export default function HomePage() {
             userId: user?.id as string,
           },
         })
-        await Api.user.update.mutate({
+        await updateUser({
           where: { id: user.id },
           data: { credits: user.credits - 1 }
         })

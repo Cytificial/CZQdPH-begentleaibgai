@@ -38,9 +38,7 @@ model SubscriptionPlan {
     id                  String         @id @default(uuid())
     name                String
     price               String
-    credits             Float
-    features            Json?
-    duration            Float
+    features            String[]
 
     subscriptionsAsPlan Subscription[] @relation("plan")
     createdAt           DateTime       @default(now())
