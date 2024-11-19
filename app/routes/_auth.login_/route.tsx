@@ -1,7 +1,8 @@
 import { Api } from '@/core/trpc'
 import { AppHeader } from '@/designSystem/ui/AppHeader'
 import { useNavigate, useSearchParams } from '@remix-run/react'
-import { Button, Flex, Form, Input, Typography } from 'antd'
+import { Button, Checkbox, Flex, Form, Input, Typography } from 'antd'
+import { EyeInvisibleTwoTone, EyeTwoTone, GithubOutlined, GoogleOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
 import { AuthenticationClient } from '~/core/authentication/client'
 
@@ -11,6 +12,7 @@ export default function LoginPage() {
 
   const [form] = Form.useForm()
   const [isLoading, setLoading] = useState(false)
+  const [rememberMe, setRememberMe] = useState(false)
 
   const { mutateAsync: login } = Api.authentication.login.useMutation({
     onSuccess: data => {
@@ -48,7 +50,11 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      await login({ email: values.email, password: values.password })
+      await login({ 
+        email: values.email, 
+        password: values.password,
+        remember: rememberMe 
+      })
     } catch (error) {
       console.error(`Could not login: ${error.message}`, { variant: 'error' })
 
@@ -82,21 +88,31 @@ export default function LoginPage() {
           <Form.Item
             label="Email"
             name="email"
-            rules={[{ required: true, message: 'Email is required' }]}
+            rules={[
+              { required: true, message: 'Email is required' },
+              { type: 'email', message: 'Please enter a valid email address' }
+            ]}
           >
-            <Input type="email" placeholder="Your email" autoComplete="email" />
+            <Input placeholder="Your email" autoComplete="email" />
           </Form.Item>
 
           <Form.Item
             label="Password"
             name="password"
-            rules={[{ required: true, message: 'Password is required' }]}
+            rules={[
+              { required: true, message: 'Password is required' },
+              { min: 6, message: 'Password must be at least 6 characters' }
+            ]}
           >
             <Input.Password
-              type="password"
               placeholder="Your password"
               autoComplete="current-password"
+              iconRender={(visible) => (visible ? <EyeTwoTone /> : <EyeInvisibleTwoTone />)}
             />
+          </Form.Item>
+
+          <Form.Item name="remember" valuePropName="checked">
+            <Checkbox onChange={(e) => setRememberMe(e.target.checked)}>Remember me</Checkbox>
           </Form.Item>
 
           <Form.Item>

@@ -9,6 +9,11 @@ import {
   Space,
   Row,
   Col,
+  Select,
+  Rate,
+  DatePicker,
+  Modal,
+  Tabs,
 } from 'antd'
 import { useState } from 'react'
 const { Title, Text, Paragraph } = Typography
@@ -25,6 +30,12 @@ export default function HomePage() {
   const [description, setDescription] = useState('')
   const [selectedTopic, setSelectedTopic] = useState('')
   const [generatedPrompt, setGeneratedPrompt] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
+  const [promptQuality, setPromptQuality] = useState(0)
+  const [filterTopic, setFilterTopic] = useState('')
+  const [filterDate, setFilterDate] = useState<any>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [previewMode, setPreviewMode] = useState(false)
 
   // Queries
   const { data: subscription } = Api.subscription.findFirst.useQuery({
@@ -55,8 +66,9 @@ export default function HomePage() {
       return
     }
 
+    setIsLoading(true)
     try {
-      const result = await generatePrompt({ 
+      const result = await generatePrompt({
         prompt: `Generate a professional prompt based on this description: ${description}`,
       })
 
@@ -76,8 +88,10 @@ export default function HomePage() {
           data: { credits: user.credits - 1 }
         })
         message.success('Prompt generated successfully!')
+        setPromptQuality(0)
       }
     } catch (error) {
+      setIsLoading(false)
       console.error('Error generating prompt:', error)
       
       setGeneratedPrompt('')
@@ -122,30 +136,58 @@ export default function HomePage() {
               </Text>
             </div>
 
+            <Select
+              style={{ width: '100%' }}
+              placeholder="Select a topic"
+              value={selectedTopic}
+              onChange={setSelectedTopic}
+            >
+              {suggestions?.map(suggestion => (
+                <Select.Option key={suggestion.id} value={suggestion.topic}>
+                  {suggestion.topic}
+                </Select.Option>
+              ))}
+            </Select>
+
             <TextArea
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe what you want to generate..."
               rows={4}
+              maxLength={500}
+              showCount
             />
 
-            <Button type="primary" onClick={handleGeneratePrompt} block>
+            <Button type="primary" onClick={handleGeneratePrompt} loading={isLoading} block>
               <i className="las la-magic" /> Generate Prompt
             </Button>
           </Space>
         </Card>
 
         <Card style={{ display: generatedPrompt ? 'block' : 'none' }}>
-          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+          <Space direction='vertical' size='middle' style={{ width: '100%' }}>
             <Text strong>Generated Prompt:</Text>
             <Paragraph>{generatedPrompt}</Paragraph>
-            <Button 
-              type="text"
-              icon={<i className="las la-copy" />}
-              onClick={() => copyToClipboard(generatedPrompt)}
-            >
-              Copy to clipboard
-            </Button>
+            <Space>
+              <Text>Quality Score:</Text>
+              <Rate value={promptQuality} onChange={setPromptQuality} />
+            </Space>
+            <Space>
+              <Button
+                type='primary'
+                icon={<i className='las la-eye' />}
+                onClick={() => setPreviewMode(true)}
+              >
+                Preview
+              </Button>
+              <Button 
+                type='text'
+                icon={<i className='las la-copy' />}
+                onClick={() => copyToClipboard(generatedPrompt)}
+              >
+                Copy to clipboard
+              </Button>
+            </Space>
           </Space>
         </Card>
 
@@ -180,12 +222,49 @@ export default function HomePage() {
               <i className="las la-history" /> Generated Prompts History
             </>
           }
+          extra={
+            <Space>
+              <Select
+                style={{ width: 200 }}
+                placeholder="Filter by topic"
+                value={filterTopic}
+                onChange={setFilterTopic}
+                allowClear
+              >
+                {suggestions?.map(suggestion => (
+                  <Select.Option key={suggestion.id} value={suggestion.topic}>
+                    {suggestion.topic}
+                  </Select.Option>
+                ))}
+              </Select>
+              <DatePicker onChange={setFilterDate} />
+            </Space>
+          }
         >
           <List
-            dataSource={prompts}
+            dataSource={prompts?.filter(prompt => 
+              (!filterTopic || prompt.topic === filterTopic) &&
+              (!filterDate || dayjs(prompt.createdAt).isSame(filterDate, 'day'))
+            )}
+            pagination={{
+              current: currentPage,
+              onChange: setCurrentPage,
+              pageSize: 10,
+              total: prompts?.length
+            }}
             renderItem={prompt => (
               <List.Item
                 actions={[
+                  <Tooltip title="Toggle favorite">
+                    <Button
+                      type="text"
+                      icon={<i className={`las ${prompt.isFavorite ? 'la-heart' : 'la-heart-o'}`} />}
+                      onClick={() => updatePrompt({
+                        where: { id: prompt.id },
+                        data: { isFavorite: !prompt.isFavorite }
+                      })}
+                    />
+                  </Tooltip>,
                   <Tooltip title="Copy to clipboard">
                     <Button
                       type="text"
@@ -211,6 +290,34 @@ export default function HomePage() {
           />
         </Card>
       </Space>
+
+      <Modal
+        title="Prompt Preview"
+        open={previewMode}
+        onCancel={() => setPreviewMode(false)}
+        footer={null}
+        width={800}
+      >
+        <Tabs
+          items={[
+            {
+              key: 'chatgpt',
+              label: 'ChatGPT',
+              children: <Card>{generatedPrompt}</Card>
+            },
+            {
+              key: 'midjourney',
+              label: 'Midjourney',
+              children: <Card>/imagine {generatedPrompt} --v 5</Card>
+            },
+            {
+              key: 'dalle',
+              label: 'DALL-E',
+              children: <Card>Create an image of {generatedPrompt}</Card>
+            }
+          ]}
+        />
+      </Modal>
     </PageLayout>
   )
 }

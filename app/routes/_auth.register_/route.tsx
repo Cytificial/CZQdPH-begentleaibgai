@@ -3,7 +3,7 @@ import { Api } from '@/core/trpc'
 import { AppHeader } from '@/designSystem/ui/AppHeader'
 import { User } from '@prisma/client'
 import { useNavigate, useSearchParams } from '@remix-run/react'
-import { Button, Flex, Form, Input, Typography } from 'antd'
+import { Button, Checkbox, Flex, Form, Input, Progress, Typography } from 'antd'
 import { useEffect, useState } from 'react'
 
 export default function RegisterPage() {
@@ -13,6 +13,16 @@ export default function RegisterPage() {
   const [form] = Form.useForm()
 
   const [isLoading, setLoading] = useState(false)
+  const [passwordStrength, setPasswordStrength] = useState(0)
+  
+  const calculatePasswordStrength = (password: string) => {
+    let strength = 0
+    if (password.length >= 8) strength += 25
+    if (password.match(/[A-Z]/)) strength += 25
+    if (password.match(/[0-9]/)) strength += 25
+    if (password.match(/[^A-Za-z0-9]/)) strength += 25
+    setPasswordStrength(strength)
+  }
 
   const { mutateAsync: register } = Api.authentication.register.useMutation()
 
@@ -73,7 +83,10 @@ export default function RegisterPage() {
           <Form.Item
             label="Email"
             name="email"
-            rules={[{ required: true, message: 'Email is required' }]}
+            rules={[
+              { required: true, message: 'Email is required' },
+              { type: 'email', message: 'Please enter a valid email address' }
+            ]}
           >
             <Input type="email" placeholder="Your email" autoComplete="email" />
           </Form.Item>
@@ -88,13 +101,52 @@ export default function RegisterPage() {
           <Form.Item
             label="Password"
             name="password"
-            rules={[{ required: true, message: 'Password is required' }]}
+            rules={[
+              { required: true, message: 'Password is required' },
+              { min: 8, message: 'Password must be at least 8 characters' }
+            ]}
           >
             <Input.Password
               type="password"
               placeholder="Your password"
-              autoComplete="current-password"
+              autoComplete="new-password"
+              onChange={(e) => calculatePasswordStrength(e.target.value)}
             />
+          </Form.Item>
+          
+          <Progress percent={passwordStrength} size="small" />
+
+          <Form.Item
+            label="Confirm Password"
+            name="confirmPassword"
+            dependencies={['password']}
+            rules={[
+              { required: true, message: 'Please confirm your password' },
+              ({ getFieldValue }) => ({
+                validator(_, value) {
+                  if (!value || getFieldValue('password') === value) {
+                    return Promise.resolve()
+                  }
+                  return Promise.reject('Passwords do not match')
+                }
+              })
+            ]}
+          >
+            <Input.Password
+              type="password"
+              placeholder="Confirm your password"
+              autoComplete="new-password"
+            />
+          </Form.Item>
+
+          <Form.Item
+            name="terms"
+            valuePropName="checked"
+            rules={[{ required: true, message: 'Please accept the terms and conditions' }]}
+          >
+            <Checkbox>
+              I agree to the <Typography.Link href="/terms" target="_blank">Terms and Conditions</Typography.Link>
+            </Checkbox>
           </Form.Item>
 
           <Form.Item>
