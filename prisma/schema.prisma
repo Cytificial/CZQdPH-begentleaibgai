@@ -29,6 +29,7 @@ model User {
   pictureUrl       String?        @default("https://i.imgur.com/ZdJSK3Y.jpeg")
   tokenInvitation  String?
   stripeCustomerId String?
+  credits          Float          @default(3)
   status           UserStatus     @default(VERIFIED)
   globalRole       String         @default("USER")
   /// @password

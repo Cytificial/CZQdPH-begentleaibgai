@@ -48,8 +48,13 @@ export default function HomePage() {
       return
     }
 
+    if (user.credits <= 0) {
+      message.error('No credits remaining. Please upgrade.')
+      return
+    }
+
     try {
-      const result = await generatePrompt({
+      const result = await generatePrompt({ 
         prompt: `Generate a professional prompt based on this description: ${description}`,
       })
 
@@ -62,6 +67,10 @@ export default function HomePage() {
             topic: selectedTopic,
             userId: user?.id as string,
           },
+        })
+        await Api.user.update.mutate({
+          where: { id: user.id },
+          data: { credits: user.credits - 1 }
         })
         message.success('Prompt generated successfully!')
         setDescription('')
@@ -95,9 +104,9 @@ export default function HomePage() {
         <Card>
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <div>
-              <Text strong>Available Credits: </Text>
+              <Text strong>Monthly Credits Remaining: </Text>
               <Text type="success">
-                {subscription?.plan?.credits?.toString() || '0'} prompts
+                {user.credits} credits
               </Text>
             </div>
 

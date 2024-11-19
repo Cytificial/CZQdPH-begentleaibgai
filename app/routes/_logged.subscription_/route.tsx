@@ -20,12 +20,23 @@ export default function SubscriptionPage() {
       orderBy: { createdAt: 'desc' },
     })
 
+  const { mutateAsync: createSubscription } = Api.subscription.create.useMutation()
   const { mutateAsync: createPaymentLink, isLoading: paymentLinkLoading } =
     Api.billing.createPaymentLink.useMutation()
 
-  const handleSubscribe = async (planId: string) => {
+  const handleSubscribe = async (plan: any) => {
     try {
-      const response = await createPaymentLink({ productId: planId })
+      await createSubscription({ 
+        data: { 
+          planId: plan.id, 
+          userId: user?.id as string, 
+          status: 'active', 
+          startDate: new Date().toISOString(), 
+          endDate: dayjs().add(1, 'month').toISOString() 
+        } 
+      })
+      
+      const response = await createPaymentLink({ productId: plan.id })
       if (typeof response === 'string') {
         window.location.href = response
       } else if (typeof response === 'object' && response.url) {
@@ -34,7 +45,7 @@ export default function SubscriptionPage() {
         message.error('Invalid payment link received')
       }
     } catch (error) {
-      message.error('Failed to create payment link')
+      message.error('Failed to create subscription')
     }
   }
 
@@ -57,6 +68,17 @@ export default function SubscriptionPage() {
         </Title>
         <Text>Choose the perfect plan for your needs</Text>
       </div>
+
+      <Card style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <Title level={4}>
+          <i className="las la-coins" style={{ marginRight: '8px' }}></i>
+          Available Credits
+        </Title>
+        <Title level={2} style={{ margin: '16px 0' }}>
+          {user?.credits || 0}
+        </Title>
+        <Text>credits remaining</Text>
+      </Card>
 
       {subscription && (
         <Card style={{ marginBottom: '2rem', textAlign: 'center' }}>
@@ -114,7 +136,7 @@ export default function SubscriptionPage() {
                   type="primary"
                   size="large"
                   loading={paymentLinkLoading}
-                  onClick={() => handleSubscribe(plan.id)}
+                  onClick={() => handleSubscribe(plan)}
                   style={{ width: '100%' }}
                 >
                   Subscribe Now

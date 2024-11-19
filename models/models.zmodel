@@ -11,6 +11,7 @@ model User {
     tokenInvitation  String?
 
     stripeCustomerId String?
+    credits          Float          @default(3)
 
     status           UserStatus     @default(VERIFIED)
 
