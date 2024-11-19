@@ -1,0 +1,95 @@
+enum UserStatus {
+    INVITED
+    VERIFIED
+}
+
+model User {
+    id               String         @id @default(uuid())
+    name             String?
+    email            String?        @unique
+    pictureUrl       String?        @default('https://i.imgur.com/ZdJSK3Y.jpeg')
+    tokenInvitation  String?
+
+    stripeCustomerId String?
+
+    status           UserStatus     @default(VERIFIED)
+
+    // this is the role of the user for the application
+    globalRole       String         @default('USER')
+    password         String?        @password @omit
+    createdAt        DateTime       @default(now())
+    updatedAt        DateTime       @updatedAt @default(now())
+
+    subscriptions    Subscription[] @relation("user")
+    prompts          Prompt[]       @relation("user")
+
+    @@auth()
+    @@allow("all", auth().id == this.id)
+    @@allow('all', auth().globalRole == 'ADMIN')
+
+    //we only allow that user to register if they don't create an admin role
+    @@allow("create", globalRole != 'ADMIN')
+    @@allow("read", true)
+}
+
+model SubscriptionPlan {
+
+    id                  String         @id @default(uuid())
+    name                String
+    price               String
+    credits             Float
+    features            Json?
+    duration            Float
+
+    subscriptionsAsPlan Subscription[] @relation("plan")
+    createdAt           DateTime       @default(now())
+    updatedAt           DateTime       @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Subscription {
+
+    id                   String            @id @default(uuid())
+    startDate            String
+    endDate              String
+    status               String
+    stripeSubscriptionId String?
+
+    userId               String
+    user                 User?             @relation(fields: [userId], references: [id], name: "user")
+    planId               String
+    plan                 SubscriptionPlan? @relation(fields: [planId], references: [id], name: "plan")
+
+    createdAt            DateTime          @default(now())
+    updatedAt            DateTime          @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Prompt {
+
+    id               String   @id @default(uuid())
+    inputDescription String
+    generatedPrompt  String
+    isFavorite       Boolean
+    topic            String?
+
+    userId           String
+    user             User?    @relation(fields: [userId], references: [id], name: "user")
+
+    createdAt        DateTime @default(now())
+    updatedAt        DateTime @updatedAt @default(now())
+    @@allow("all", true)
+}
+
+model Suggestion {
+
+    id          String   @id @default(uuid())
+    topic       String
+    description String
+    example     String?
+
+    createdAt   DateTime @default(now())
+    updatedAt   DateTime @updatedAt @default(now())
+    @@allow("all", true)
+}
+
