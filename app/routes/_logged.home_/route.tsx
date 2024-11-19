@@ -18,12 +18,13 @@ import dayjs from 'dayjs'
 import { useLocation, useNavigate, useParams } from '@remix-run/react'
 import { useUploadPublic } from '@/plugins/upload/client'
 import { Api } from '@/core/trpc'
-import { PageLayout } from '@/designSystem'
+import { PageLayout, ErrorBoundary } from '@/designSystem'
 
 export default function HomePage() {
   const { user } = useUserContext()
   const [description, setDescription] = useState('')
   const [selectedTopic, setSelectedTopic] = useState('')
+  const [generatedPrompt, setGeneratedPrompt] = useState('')
 
   // Queries
   const { data: subscription } = Api.subscription.findFirst.useQuery({
@@ -60,6 +61,7 @@ export default function HomePage() {
       })
 
       if (result.answer) {
+        setGeneratedPrompt(result.answer)
         await createPrompt({
           data: {
             inputDescription: description,
@@ -74,11 +76,20 @@ export default function HomePage() {
           data: { credits: user.credits - 1 }
         })
         message.success('Prompt generated successfully!')
-        setDescription('')
-        setSelectedTopic('')
       }
     } catch (error) {
-      message.error('Failed to generate prompt')
+      console.error('Error generating prompt:', error)
+      
+      setGeneratedPrompt('')
+      if (error.code === 'UNAUTHORIZED') {
+        message.error('Please login to generate prompts')
+      } else if (error.code === 'RATE_LIMITED') {
+        message.error('Too many requests. Please try again later.')
+      } else if (error.code === 'BAD_REQUEST') {
+        message.error('Invalid prompt request. Please try again.')
+      } else {
+        message.error('Failed to generate prompt. Please try again.')
+      }
     }
   }
 
@@ -120,6 +131,20 @@ export default function HomePage() {
 
             <Button type="primary" onClick={handleGeneratePrompt} block>
               <i className="las la-magic" /> Generate Prompt
+            </Button>
+          </Space>
+        </Card>
+
+        <Card style={{ display: generatedPrompt ? 'block' : 'none' }}>
+          <Space direction="vertical" size="middle" style={{ width: '100%' }}>
+            <Text strong>Generated Prompt:</Text>
+            <Paragraph>{generatedPrompt}</Paragraph>
+            <Button 
+              type="text"
+              icon={<i className="las la-copy" />}
+              onClick={() => copyToClipboard(generatedPrompt)}
+            >
+              Copy to clipboard
             </Button>
           </Space>
         </Card>

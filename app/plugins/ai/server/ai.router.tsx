@@ -19,11 +19,11 @@ import { AiService } from './ai.service'
  * @isAlwaysIncluded false
  * @import import { Api } from '@/core/trpc'
  */
-const check = () => {
+const checkApiKey = () => {
   if (!AiService.isActive()) {
     throw new TRPCError({
-      code: 'INTERNAL_SERVER_ERROR',
-      message: 'Set SERVER_OPENAI_API_KEY in your .env to activate OpenAI',
+      code: 'PRECONDITION_FAILED',
+      message: 'OpenAI API key not configured. Add SERVER_OPENAI_API_KEY to .env',
     })
   }
 }
@@ -37,15 +37,38 @@ export const AiRouter = Trpc.createRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      const { prompt, attachmentUrls } = input
-      check()
+      try {
+        const { prompt, attachmentUrls } = input
+        checkApiKey()
 
-      const answer = await AiService.generateText({
-        prompt,
-        attachmentUrls,
-      })
+        const answer = await AiService.generateText({
+          prompt,
+          attachmentUrls,
+        })
 
-      return { answer }
+        return { answer }
+      } catch (error) {
+        if (error instanceof TRPCError) throw error
+        
+        if (error.response?.status === 429) {
+          throw new TRPCError({
+            code: 'TOO_MANY_REQUESTS',
+            message: 'OpenAI rate limit exceeded. Please try again later.',
+          })
+        }
+        
+        if (error.response?.status === 400) {
+          throw new TRPCError({
+            code: 'BAD_REQUEST', 
+            message: 'Invalid request to OpenAI API. Please check your inputs.',
+          })
+        }
+
+        throw new TRPCError({
+          code: 'INTERNAL_SERVER_ERROR',
+          message: 'OpenAI API error occurred.',
+        })
+      }
     }),
 
   /**
@@ -61,7 +84,7 @@ export const AiRouter = Trpc.createRouter({
       }),
     )
     .mutation(async ({ input }) => {
-      check()
+      checkApiKey()
 
       const schema = z.object({
         results: z.array(
@@ -84,7 +107,7 @@ export const AiRouter = Trpc.createRouter({
   generateImage: Trpc.procedure
     .input(z.object({ prompt: z.string() }))
     .mutation(async ({ input }) => {
-      check()
+      checkApiKey()
 
       const url = await AiService.generateImage(input.prompt)
 
@@ -94,7 +117,7 @@ export const AiRouter = Trpc.createRouter({
   audioToText: Trpc.procedure
     .input(z.object({ url: z.string() }))
     .mutation(async ({ input }) => {
-      check()
+      checkApiKey()
 
       const arrayBuffer = await axios
         .get<ArrayBuffer>(input.url, { responseType: 'arraybuffer' })
@@ -113,7 +136,7 @@ export const AiRouter = Trpc.createRouter({
   textToAudio: Trpc.procedure
     .input(z.object({ text: z.string() }))
     .mutation(async ({ input }) => {
-      check()
+      checkApiKey()
 
       const buffer = await AiService.fromTextToAudio(input.text)
 
