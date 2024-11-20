@@ -5,7 +5,7 @@ import { Trpc } from '@/core/trpc/base'
 import { AiServer } from '@/plugins/ai/server'
 import { EmailServer } from '@/plugins/email/server'
 import { UploadServer } from '@/plugins/upload/server'
-
+import { AnalyticsRouter } from '../routes/api.analytics/route'
 import { PaymentServer } from '~/plugins/payment/server'
 
 export const appRouter = Trpc.mergeRouters(
@@ -18,7 +18,7 @@ export const appRouter = Trpc.mergeRouters(
     upload: UploadServer.trpcRouter,
     ai: AiServer.trpcRouter,
     email: EmailServer.trpcRouter,
-
+    analytics: AnalyticsRouter,
     billing: PaymentServer.trpcRouter,
   }),
 )

@@ -22,6 +22,7 @@ enum UserStatus {
 /// @@allow('all', auth().globalRole == 'ADMIN')
 /// @@allow('create', globalRole != 'ADMIN')
 /// @@allow('read', true)
+/// @@allow('update', auth().effectiveCredits > 0)
 model User {
   id               String         @id() @default(uuid())
   name             String?
@@ -30,6 +31,7 @@ model User {
   tokenInvitation  String?
   stripeCustomerId String?
   credits          Float          @default(3)
+  effectiveCredits Float?
   status           UserStatus     @default(VERIFIED)
   globalRole       String         @default("USER")
   /// @password
@@ -80,12 +82,17 @@ model Prompt {
   updatedAt        DateTime @default(now()) @updatedAt()
 }
 
-/// @@allow('all', true)
-model Suggestion {
-  id          String   @id() @default(uuid())
-  topic       String
-  description String
-  example     String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @default(now()) @updatedAt()
+/// @@allow('read', auth().globalRole == 'ADMIN')
+model VisitorLog {
+  id        String   @id() @default(uuid())
+  ip        String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
+}
+
+/// @@allow('read', auth().globalRole == 'ADMIN')
+model SupportMessage {
+  id        String   @id() @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt()
 }

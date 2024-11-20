@@ -6,7 +6,6 @@ import { AuthenticationService } from './service'
 
 export const AuthenticationServer = {
   createTrpcContext,
-
   getHttpContext,
   getHttpContextPublic,
   trpcRouter: AuthenticationRouter,

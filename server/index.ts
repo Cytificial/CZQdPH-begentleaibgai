@@ -3,7 +3,7 @@ import compression from 'compression'
 import express from 'express'
 import { createServer } from 'http'
 import morgan from 'morgan'
-import { AuthenticationServer } from '~/core/authentication/server'
+import { AuthenticationServer } from '@/core/authentication/server'
 
 const app = express()
 

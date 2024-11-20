@@ -1,0 +1,105 @@
+.button {
+  position: relative;
+  overflow: hidden;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &.glassmorphism {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+}
+
+.primary {
+  background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+  color: white;
+  
+  .glow {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(20px);
+  }
+  
+  &:hover .glow {
+    opacity: 0.6;
+  }
+}
+
+.secondary {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+  color: white;
+  
+  .glow {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(20px);
+  }
+  
+  &:hover .glow {
+    opacity: 0.6;
+  }
+}
+
+.ghost {
+  background: transparent;
+  border: 2px solid #6366f1;
+  color: #6366f1;
+  
+  .glow {
+    position: absolute;
+    inset: 0;
+    background: #6366f1;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    filter: blur(20px);
+  }
+  
+  &:hover {
+    background: rgba(99, 102, 241, 0.1);
+    
+    .glow {
+      opacity: 0.3;
+    }
+  }
+}
+
+.sm {
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+}
+
+.md {
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.lg {
+  font-size: 1.125rem;
+  padding: 1rem 2rem;
+}
+
+.ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  animation: ripple 0.6s linear;
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+@keyframes ripple {
+  to {
+    transform: scale(4);
+    opacity: 0;
+  }
+}

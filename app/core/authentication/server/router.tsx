@@ -35,6 +35,7 @@ export const AuthenticationRouter = Trpc.createRouter({
       z.object({
         email: z.string().email(),
         password: z.string(),
+        remember: z.boolean().optional(),
       }),
     )
     .mutation(async ({ ctx, input }) => {

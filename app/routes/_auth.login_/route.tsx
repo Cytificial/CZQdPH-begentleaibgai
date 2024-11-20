@@ -6,6 +6,12 @@ import { EyeInvisibleTwoTone, EyeTwoTone, GithubOutlined, GoogleOutlined } from 
 import { useEffect, useState } from 'react'
 import { AuthenticationClient } from '~/core/authentication/client'
 
+interface LoginFormValues {
+  email: string;
+  password: string;
+  remember?: boolean;
+}
+
 export default function LoginPage() {
   const router = useNavigate()
   const [searchParams] = useSearchParams()
@@ -46,7 +52,7 @@ export default function LoginPage() {
     }
   }, [])
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: LoginFormValues) => {
     setLoading(true)
 
     try {

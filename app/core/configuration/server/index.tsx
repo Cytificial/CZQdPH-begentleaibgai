@@ -1,4 +1,4 @@
-import { AuthenticationServer } from '~/core/authentication/server'
+import { AuthenticationServer } from '@/core/authentication/server'
 import { Trpc } from '~/core/trpc/base'
 
 type PublicVariables = {

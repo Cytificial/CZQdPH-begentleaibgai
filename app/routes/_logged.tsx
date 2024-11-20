@@ -6,7 +6,6 @@ import { MrbSplashScreen } from '~/designSystem'
 
 export default function LoggedLayout() {
   const { isLoggedIn, isLoading } = useUserContext()
-
   const router = useNavigate()
 
   useEffect(() => {
@@ -21,9 +20,21 @@ export default function LoggedLayout() {
 
   if (isLoggedIn) {
     return (
-      <NavigationLayout>
-        <Outlet />
-      </NavigationLayout>
+      <div className="relative min-h-screen w-full overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          className="absolute top-0 left-0 min-h-screen w-full object-cover"
+        >
+          <source src="/background-video.mp4" type="video/mp4" />
+        </video>
+        <div className="relative z-10 min-h-screen bg-black/50">
+          <NavigationLayout>
+            <Outlet />
+          </NavigationLayout>
+        </div>
+      </div>
     )
   }
 }

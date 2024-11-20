@@ -4,20 +4,20 @@ export const Theme = {
   algorithm: theme.defaultAlgorithm,
   token: {
     // Colors
-    colorPrimary: 'black',
+    colorPrimary: '#0066FF',
     colorError: '#ff4d4f',
     colorInfo: '#1677ff',
     colorSuccess: '#52c41a',
     colorWarning: '#faad14',
     colorTextBase: 'black',
-    colorLink: 'black',
+    colorLink: '#0066FF',
     colorBgBase: 'white',
     colorBgContainer: 'white',
     colorBorder: '#d4d4d8',
     colorBorderSecondary: '#e4e4e7',
     colorSplit: 'rgba(24, 24, 27, 0.07)',
     // Typography
-    // fontFamily: `${interFont.style.fontFamily}, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial`,
+    fontFamily: `'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial`,
     fontSize: 14,
     fontSizeHeading1: 38,
     fontSizeHeading2: 30,
@@ -33,15 +33,23 @@ export const Theme = {
     // Layout
     padding: 16,
     boxShadow:
-      '0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05)',
-    borderRadius: 6,
+      '0 6px 16px 0 rgba(0, 102, 255, 0.15), 0 3px 6px -4px rgba(0, 102, 255, 0.2), 0 9px 28px 8px rgba(0, 102, 255, 0.1)',
+    borderRadius: 12,
     lineType: 'solid',
     lineWidth: 1,
-    motion: false,
+    motion: true,
   },
   components: {
     Form: {
       itemMarginBottom: '22px',
+    },
+    Button: {
+      paddingInlineSM: 11,
+      fontWeight: 500,
+      transition: 'all 0.2s ease-in-out',
+      hover: {
+        boxShadow: '0 0 12px rgba(0, 102, 255, 0.5)',
+      }
     },
 
     Layout: {
@@ -68,10 +76,6 @@ export const Theme = {
       itemBg: 'transparent',
       iconMarginInlineEnd: 8,
       iconSize: 16,
-    },
-    Button: {
-      paddingInlineSM: 11,
-      fontWeight: 500,
     },
   },
 }

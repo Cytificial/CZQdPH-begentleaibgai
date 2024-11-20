@@ -12,6 +12,7 @@ model User {
 
     stripeCustomerId String?
     credits          Float          @default(3)
+    effectiveCredits Float?
 
     status           UserStatus     @default(VERIFIED)
 
@@ -31,6 +32,7 @@ model User {
     //we only allow that user to register if they don't create an admin role
     @@allow("create", globalRole != 'ADMIN')
     @@allow("read", true)
+    @@allow("update", auth().effectiveCredits > 0)
 }
 
 model SubscriptionPlan {
@@ -80,15 +82,19 @@ model Prompt {
     @@allow("all", true)
 }
 
-model Suggestion {
+model VisitorLog {
+    id        String   @id @default(uuid())
+    ip        String
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 
-    id          String   @id @default(uuid())
-    topic       String
-    description String
-    example     String?
-
-    createdAt   DateTime @default(now())
-    updatedAt   DateTime @updatedAt @default(now())
-    @@allow("all", true)
+    @@allow('read', auth().globalRole == 'ADMIN')
 }
 
+model SupportMessage {
+    id        String   @id @default(uuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@allow('read', auth().globalRole == 'ADMIN')
+}

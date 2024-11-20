@@ -5,12 +5,14 @@ import createUserRouter from "./User.router";
 import createSubscriptionPlanRouter from "./SubscriptionPlan.router";
 import createSubscriptionRouter from "./Subscription.router";
 import createPromptRouter from "./Prompt.router";
-import createSuggestionRouter from "./Suggestion.router";
+import createVisitorLogRouter from "./VisitorLog.router";
+import createSupportMessageRouter from "./SupportMessage.router";
 import { ClientType as UserClientType } from "./User.router";
 import { ClientType as SubscriptionPlanClientType } from "./SubscriptionPlan.router";
 import { ClientType as SubscriptionClientType } from "./Subscription.router";
 import { ClientType as PromptClientType } from "./Prompt.router";
-import { ClientType as SuggestionClientType } from "./Suggestion.router";
+import { ClientType as VisitorLogClientType } from "./VisitorLog.router";
+import { ClientType as SupportMessageClientType } from "./SupportMessage.router";
 
 export type BaseConfig = AnyRootConfig;
 
@@ -39,7 +41,8 @@ export function createRouter<Config extends BaseConfig>(router: RouterFactory<Co
         subscriptionPlan: createSubscriptionPlanRouter(router, procedure),
         subscription: createSubscriptionRouter(router, procedure),
         prompt: createPromptRouter(router, procedure),
-        suggestion: createSuggestionRouter(router, procedure),
+        visitorLog: createVisitorLogRouter(router, procedure),
+        supportMessage: createSupportMessageRouter(router, procedure),
     }
     );
 }
@@ -49,5 +52,6 @@ export interface ClientType<AppRouter extends AnyRouter> {
     subscriptionPlan: SubscriptionPlanClientType<AppRouter>;
     subscription: SubscriptionClientType<AppRouter>;
     prompt: PromptClientType<AppRouter>;
-    suggestion: SuggestionClientType<AppRouter>;
+    visitorLog: VisitorLogClientType<AppRouter>;
+    supportMessage: SupportMessageClientType<AppRouter>;
 }

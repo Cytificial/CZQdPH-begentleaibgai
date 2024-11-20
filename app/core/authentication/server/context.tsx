@@ -5,13 +5,11 @@ import { Database } from '../../database'
 import { Cookies } from './cookies'
 
 const getSession = async (options: { accessToken: string }) => {
-  let user: { id: string; email: string; name?: string }
-
   try {
     const token = options.accessToken
 
     if (!token) {
-      throw new Error()
+      throw new Error('No access token provided')
     }
 
     const { userId } = jwt.verify(
@@ -21,19 +19,33 @@ const getSession = async (options: { accessToken: string }) => {
       userId: string
     }
 
-    user = await Database.user.findUnique({
+    const user = await Database.user.findUnique({
       where: { id: userId },
       select: {
         id: true,
-        name: true,
         email: true,
+        name: true,
         globalRole: true,
-      },
+        pictureUrl: true,
+        tokenInvitation: true,
+        stripeCustomerId: true,
+        credits: true,
+        password: true,
+        createdAt: true,
+        updatedAt: true,
+      }
     })
+
+    if (!user || !user.id || !user.email || !user.name || !user.globalRole) {
+      throw new Error('Invalid user data')
+    }
 
     return { user }
   } catch (error) {
-    return {}
+    if (error instanceof jwt.JsonWebTokenError) {
+      throw new Error('Invalid token')
+    }
+    throw error
   }
 }
 
@@ -55,13 +67,16 @@ export const createTrpcContext = async (
 
   const session = await getSession({ accessToken })
 
-  const prisma = getPrisma(session)
+  const { database, databaseUnprotected, prisma, masterPrisma } = getPrisma(session)
 
   return {
     session,
     request: options.req,
     responseHeaders: options.resHeaders,
-    ...prisma,
+    database,
+    databaseUnprotected,
+    prisma,
+    masterPrisma
   }
 }
 
@@ -70,10 +85,13 @@ export const createHttpContext = async (options: { request: Request }) => {
 
   const session = await getSession({ accessToken })
 
-  const prisma = getPrisma(session)
+  const { database, databaseUnprotected, prisma, masterPrisma } = getPrisma(session)
 
   return {
     session,
-    ...prisma,
+    database,
+    databaseUnprotected,
+    prisma,
+    masterPrisma
   }
 }

@@ -1,12 +1,10 @@
 import { initTRPC, TRPCError } from '@trpc/server'
 import { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
+import { PrismaClient } from '@prisma/client'
 import superjson from 'superjson'
 import { ZodError } from 'zod'
 import { createTrpcContext } from '~/core/authentication/server/context'
-
-const createContext = async (options: FetchCreateContextFnOptions) => {
-  return await createTrpcContext(options)
-}
+import { Context as AuthContext } from '~/core/authentication/server'
 
 const trpcInstance = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -32,8 +30,31 @@ const middlewareAuthenticated = trpcInstance.middleware(({ ctx, next }) => {
   return next()
 })
 
+const middlewareAdmin = trpcInstance.middleware(({ ctx, next }) => {
+  if (!ctx.session.user) {
+    throw new TRPCError({
+      code: 'UNAUTHORIZED',
+      message: 'You must be authenticated',
+    })
+  }
+  return next()
+})
+
 const procedurePublic = trpcInstance.procedure
 const procedure = procedurePublic.use(middlewareAuthenticated)
+
+const createContext = async (options: FetchCreateContextFnOptions): Promise<Context> => {
+  return await createTrpcContext(options)
+}
+
+type Context = AuthContext & {
+  database: PrismaClient
+  databaseUnprotected: PrismaClient
+  prisma: PrismaClient  
+  masterPrisma: PrismaClient
+  request?: Request
+  responseHeaders?: Headers
+}
 
 export const Trpc = {
   createRouter: trpcInstance.router,
@@ -41,4 +62,5 @@ export const Trpc = {
   procedurePublic,
   procedure,
   createContext,
-}
+  trpcInstance
+};
