@@ -25,18 +25,18 @@ enum UserStatus {
 /// @@allow('update', auth().effectiveCredits > 0)
 model User {
   id               String         @id() @default(uuid())
-  name             String?
-  email            String?        @unique()
+  name             String?        @default("")
+  email            String         @unique()
   pictureUrl       String?        @default("https://i.imgur.com/ZdJSK3Y.jpeg")
-  tokenInvitation  String?
-  stripeCustomerId String?
+  tokenInvitation  String?        @default("")
+  stripeCustomerId String?        @default("")
   credits          Float          @default(3)
-  effectiveCredits Float?
+  effectiveCredits Float?         @default(0)
   status           UserStatus     @default(VERIFIED)
   globalRole       String         @default("USER")
   /// @password
   /// @omit
-  password         String?
+  password         String
   createdAt        DateTime       @default(now())
   updatedAt        DateTime       @default(now()) @updatedAt()
   subscriptions    Subscription[] @relation("user")
@@ -46,9 +46,9 @@ model User {
 /// @@allow('all', true)
 model SubscriptionPlan {
   id                  String         @id() @default(uuid())
-  name                String
-  price               String
-  features            String[]
+  name                String         @default("")
+  price               String         @default("0")
+  features            String[]       @default([])
   subscriptionsAsPlan Subscription[] @relation("plan")
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @default(now()) @updatedAt()
@@ -57,11 +57,11 @@ model SubscriptionPlan {
 /// @@allow('all', true)
 model Subscription {
   id                   String            @id() @default(uuid())
-  startDate            String
-  endDate              String
-  status               String
-  stripeSubscriptionId String?
-  userId               String
+  startDate            String            @default("")
+  endDate              String            @default("")
+  status               String            @default("ACTIVE")
+  stripeSubscriptionId String?           @default("")
+  userId               String            @default(uuid())
   user                 User?             @relation(fields: [userId], references: [id], name: "user")
   planId               String
   plan                 SubscriptionPlan? @relation(fields: [planId], references: [id], name: "plan")
@@ -72,11 +72,11 @@ model Subscription {
 /// @@allow('all', true)
 model Prompt {
   id               String   @id() @default(uuid())
-  inputDescription String
-  generatedPrompt  String
-  isFavorite       Boolean
-  topic            String?
-  userId           String
+  inputDescription String   @default("")
+  generatedPrompt  String   @default("")
+  isFavorite       Boolean  @default(false)
+  topic            String?  @default("")
+  userId           String   @default(uuid())
   user             User?    @relation(fields: [userId], references: [id], name: "user")
   createdAt        DateTime @default(now())
   updatedAt        DateTime @default(now()) @updatedAt()
@@ -85,7 +85,7 @@ model Prompt {
 /// @@allow('read', auth().globalRole == 'ADMIN')
 model VisitorLog {
   id        String   @id() @default(uuid())
-  ip        String
+  ip        String   @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt()
 }
