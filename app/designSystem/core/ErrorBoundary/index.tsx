@@ -1,5 +1,7 @@
 import { Button, Divider, Flex, Result, Typography } from 'antd'
 import React, { ReactNode } from 'react'
+import { TRPCClientError } from '@trpc/client'
+import { Api } from '@/core/trpc'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -25,13 +27,14 @@ export class ErrorBoundary extends React.Component<
   }
 
   static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    const isTRPCError = error instanceof TRPCClientError
     const isAuthError = error.message.includes('401') || 
-                       error.message.includes('403') ||
-                       error.message.includes('authentication');
-    return { 
-      hasError: true, 
+                       error.message.includes('403') || 
+                       error.message.includes('authentication')
+    return {
+      hasError: true,
       error,
-      isAuthError 
+      isAuthError: isAuthError || (isTRPCError && ['UNAUTHORIZED', 'FORBIDDEN'].includes((error as TRPCClientError).code))
     }
   }
 
@@ -53,6 +56,10 @@ export class ErrorBoundary extends React.Component<
   }
 
   handleRetry = async () => {
+    const apiUtils = Api.useUtils()
+    if (this.state.error instanceof TRPCClientError) {
+      await apiUtils.invalidate()
+    }
     this.setState({ hasError: false, error: null, isAuthError: false })
   }
 

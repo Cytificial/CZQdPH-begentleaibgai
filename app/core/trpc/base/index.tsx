@@ -5,6 +5,7 @@ import superjson from 'superjson'
 import { ZodError } from 'zod'
 import { createTrpcContext } from '~/core/authentication/server/context'
 import { Context as AuthContext } from '~/core/authentication/server'
+import { ConfigurationServer } from '@/core/configuration/server'
 
 const trpcInstance = initTRPC.context<typeof createContext>().create({
   transformer: superjson,
@@ -56,11 +57,14 @@ type Context = AuthContext & {
   responseHeaders?: Headers
 }
 
+export type RouterType = ReturnType<typeof trpcInstance.router>;
+
 export const Trpc = {
   createRouter: trpcInstance.router,
   mergeRouters: trpcInstance.mergeRouters,
   procedurePublic,
   procedure,
   createContext,
-  trpcInstance
+  trpcInstance,
+  configuration: ConfigurationServer.trpcRouter
 };

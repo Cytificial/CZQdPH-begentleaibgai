@@ -1,41 +1,40 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { httpBatchLink } from '@trpc/client'
+import { httpBatchLink, TRPCClientError } from '@trpc/client'
 import React, { ReactNode, useState } from 'react'
 import superjson from 'superjson'
-import { createTRPCReact } from '../../.marblism/zenstack/client/react'
-import { AnalyticsRouter } from '/app/routes/api.analytics/route'
-export type { AppRouter } from '@/server'
+import { createTRPCReact } from '@trpc/react-query'
+import { AnalyticsRouter } from '~/routes/api.analytics/route'
+import type { AppRouter } from '@/server'
+import { ConfigurationServer } from '@/core/configuration/server'
+import { AuthenticationServer } from '@/core/authentication/server'
 
 type MergedRouter = AppRouter & {
-  analytics: typeof AnalyticsRouter
+  configuration: typeof ConfigurationServer.trpcRouter,
+  analytics: typeof AnalyticsRouter,
+  authentication: typeof AuthenticationServer.trpcRouter
 }
 
-export const Api = {
-  trpc: createTRPCReact<MergedRouter>()
-}
+const trpc = createTRPCReact<MergedRouter>()
 
-const Provider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [queryClient] = useState(() => new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  }))
-  
-  const [trpcClient] = useState(() => Api.trpc.createClient({
-    transformer: superjson,
-    links: [httpBatchLink({ url: '/api/trpc' })],
-  }))
-  
-  return (
-    <QueryClientProvider client={queryClient}>
-      <Api.trpc.Provider client={trpcClient} queryClient={queryClient}>
-        {children}
-      </Api.trpc.Provider>
-    </QueryClientProvider>
-  )
+export const Api = trpc;
+
+const errorHandler = (error: TRPCClientError<MergedRouter>) => {
+  if (!navigator.onLine) {
+    throw new Error('Network connection lost')
+  }
+  throw error
 }
 
 export const TrpcClient = {
-  Provider,
+  trpc,
+  Provider: trpc.Provider,
+  configuration: ConfigurationServer.trpcRouter,
+  analytics: AnalyticsRouter,
+  authentication: AuthenticationServer.trpcRouter,
+  links: [
+    httpBatchLink({
+      url: '/api/trpc',
+      onError: errorHandler
+    })
+  ]
 }

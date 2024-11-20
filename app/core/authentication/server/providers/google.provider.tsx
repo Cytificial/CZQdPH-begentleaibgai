@@ -47,6 +47,7 @@ class Provider {
                   email,
                   name: profile.displayName,
                   pictureUrl: profile.photos[0].value,
+                  password: 'OAUTH_USER', // Add default password for OAuth users
                 },
               })
             }

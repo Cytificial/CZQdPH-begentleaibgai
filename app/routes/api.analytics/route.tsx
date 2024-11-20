@@ -18,8 +18,11 @@ const middlewareAdmin = Trpc.trpcInstance.middleware(({ ctx, next }) => {
 export const AnalyticsRouter = Trpc.createRouter({
   getMetrics: Trpc.procedure
     .use(middlewareAdmin)
-    .input(z.object({}).strict())
-    .query(async ({ ctx }) => {
+    .input(z.object({
+      startDate: z.date().optional(),
+      endDate: z.date().optional()
+    }).strict())
+    .query(async ({ ctx, input }) => {
       const today = dayjs()
       const yesterday = today.subtract(24, 'hours')
 
@@ -67,6 +70,4 @@ export const AnalyticsRouter = Trpc.createRouter({
         supportMessages,
       }
     }),
-})
-
-export default AnalyticsRouter
+}) satisfies Record<string, unknown>
