@@ -37,6 +37,7 @@
     "@remix-run/serve": "^2.13.1",
     "@tanstack/react-query": "^4.36.1",
     "@trpc/client": "^10.45.2",
+    "@trpc/next": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
     "@zenstackhq/runtime": "2.6.2",
@@ -106,5 +107,8 @@
   },
   "zenstack": {
     "schema": "./models/schema.zmodel"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
   }
 }

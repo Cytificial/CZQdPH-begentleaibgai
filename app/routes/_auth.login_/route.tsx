@@ -1,15 +1,22 @@
 import { Api } from '@/core/trpc'
 import { AppHeader } from '@/designSystem/ui/AppHeader'
 import { useNavigate, useSearchParams } from '@remix-run/react'
-import { Button, Checkbox, Flex, Form, Input, Typography } from 'antd'
+import { Button, Checkbox, Flex, Form, Input, Typography, Progress, Alert, Skeleton } from 'antd'
 import { EyeInvisibleTwoTone, EyeTwoTone, GithubOutlined, GoogleOutlined } from '@ant-design/icons'
 import { useEffect, useState } from 'react'
-import { AuthenticationClient } from '~/core/authentication/client'
+import { AuthenticationClient } from '~/core/authentication/client/index'
+import { motion, AnimatePresence } from 'framer-motion'
+import { TRPCError } from '@trpc/server'
 
 interface LoginFormValues {
   email: string;
   password: string;
   remember?: boolean;
+}
+
+interface ErrorState {
+  type: 'api' | 'network' | 'validation';
+  message: string;
 }
 
 export default function LoginPage() {
@@ -19,13 +26,18 @@ export default function LoginPage() {
   const [form] = Form.useForm()
   const [isLoading, setLoading] = useState(false)
   const [rememberMe, setRememberMe] = useState(false)
+  const [error, setError] = useState<ErrorState | null>(null)
 
   const { mutateAsync: login } = Api.authentication.login.useMutation({
     onSuccess: data => {
-      if (data.redirect) {
-        window.location.href = data.redirect
+      try {
+        const redirect = data.redirect && new URL(data.redirect).href;
+        window.location.href = redirect || '/dashboard';
+      } catch {
+        window.location.href = '/dashboard';
       }
     },
+    retry: false
   })
 
   const errorKey = searchParams.get('error')
@@ -54,6 +66,7 @@ export default function LoginPage() {
 
   const handleSubmit = async (values: LoginFormValues) => {
     setLoading(true)
+    setError(null)
 
     try {
       await login({ 
@@ -62,18 +75,45 @@ export default function LoginPage() {
         remember: rememberMe 
       })
     } catch (error) {
-      console.error(`Could not login: ${error.message}`, { variant: 'error' })
-
+      if (!navigator.onLine) {
+        setError({
+          type: 'network',
+          message: 'Network connection lost. Please check your internet connection.'
+        })
+      } else if (error instanceof TRPCError) {
+        const errorMessages = {
+          UNAUTHORIZED: 'Invalid email or password. Please check your credentials.',
+          FORBIDDEN: 'Your account has been locked. Please contact support.',
+          TOO_MANY_REQUESTS: 'Too many login attempts. Please try again later.',
+          TIMEOUT: 'Request timed out. Please check your connection.',
+          BAD_REQUEST: 'Invalid login request. Please check your input.',
+          INTERNAL_SERVER_ERROR: 'Server error. Please try again later.',
+          CONFLICT: 'Account conflict detected. Please contact support.',
+          PRECONDITION_FAILED: 'Login prerequisites not met. Please verify your account.'
+        };
+        setError({
+          type: 'api',
+          message: errorMessages[error.code] || `Authentication error: ${error.message}`
+        });
+      } else {
+        setError({
+          type: 'api',
+          message: 'An unexpected error occurred during login. Please try again.'
+        })
+      }
+      console.error('Login error:', error);
+    } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Flex align="center" justify="center" vertical flex={1}>
+    <Flex align="center" justify="center" vertical flex={1} className="px-4">
       <Flex
         vertical
         style={{
-          width: '340px',
+          width: '100%',
+          maxWidth: '340px',
           paddingBottom: '100px',
           paddingTop: '100px',
         }}
@@ -81,8 +121,26 @@ export default function LoginPage() {
       >
         <AppHeader description="Welcome!" />
 
-        {errorKey && (
-          <Typography.Text type="danger">{errorMessage}</Typography.Text>
+        <AnimatePresence>
+          {(error || errorKey) && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
+            >
+              <Alert
+                type="error"
+                message={error?.message || errorMessage}
+                showIcon
+                style={{ marginBottom: 16 }}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {isLoading && (
+          <Skeleton active paragraph={{ rows: 3 }} style={{ marginBottom: 16 }} />
         )}
 
         <Form
@@ -95,8 +153,7 @@ export default function LoginPage() {
             label="Email"
             name="email"
             rules={[
-              { required: true, message: 'Email is required' },
-              { type: 'email', message: 'Please enter a valid email address' }
+              { required: true, message: 'Email is required' }
             ]}
           >
             <Input placeholder="Your email" autoComplete="email" />
@@ -106,9 +163,9 @@ export default function LoginPage() {
             label="Password"
             name="password"
             rules={[
-              { required: true, message: 'Password is required' },
-              { min: 6, message: 'Password must be at least 6 characters' }
+              { required: true, message: 'Password is required' }
             ]}
+            hasFeedback
           >
             <Input.Password
               placeholder="Your password"

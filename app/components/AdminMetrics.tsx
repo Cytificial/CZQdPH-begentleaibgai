@@ -1,6 +1,6 @@
 import { Row, Col, Statistic } from 'antd'
 import { Api } from '@/core/trpc'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 
 export const AdminMetrics = () => {
   const { data, refetch } = Api.analytics.getMetrics.useQuery({})

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { TRPCError } from '@trpc/server'
 import { PaymentService } from '~/plugins/payment/server/payment.service'
 import dayjs from 'dayjs'
+import { Prisma } from '@prisma/client'
 
 const middlewareAdmin = Trpc.trpcInstance.middleware(({ ctx, next }) => {
   if (ctx.session?.user?.globalRole !== 'ADMIN') {
@@ -17,20 +18,21 @@ const middlewareAdmin = Trpc.trpcInstance.middleware(({ ctx, next }) => {
 export const AnalyticsRouter = Trpc.createRouter({
   getMetrics: Trpc.procedure
     .use(middlewareAdmin)
-    .input(z.object({}))
+    .input(z.object({}).strict())
     .query(async ({ ctx }) => {
       const today = dayjs()
       const yesterday = today.subtract(24, 'hours')
 
       // Get daily visitors (unique IPs in last 24h)
-      const dailyVisitors = await ctx.database.visitorLog.count({
+      const dailyVisitors = (await ctx.database.visitorLog.groupBy({
+        by: ['ip'],
         where: {
           createdAt: {
             gte: yesterday.toDate(),
           },
         },
-        distinct: [['ip']],
-      })
+        _count: { _all: true }
+      })).length
 
       // Get new users registered today
       const newUsers = await ctx.database.user.count({

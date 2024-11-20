@@ -1,6 +1,7 @@
 import { FetchCreateContextFnOptions } from '@trpc/server/adapters/fetch'
 import { enhance } from '@zenstackhq/runtime'
 import jwt from 'jsonwebtoken'
+import { UserStatus } from '@prisma/client'
 import { Database } from '../../database'
 import { Cookies } from './cookies'
 
@@ -30,13 +31,15 @@ const getSession = async (options: { accessToken: string }) => {
         tokenInvitation: true,
         stripeCustomerId: true,
         credits: true,
+        effectiveCredits: true,
+        status: true,
         password: true,
         createdAt: true,
         updatedAt: true,
       }
     })
 
-    if (!user || !user.id || !user.email || !user.name || !user.globalRole) {
+    if (!user || !user.id || !user.email || !user.name || !user.globalRole || !user.effectiveCredits || !user.status) {
       throw new Error('Invalid user data')
     }
 
