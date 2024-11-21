@@ -21,7 +21,6 @@ import { Api } from '@/core/trpc'
 import { PageLayout } from '@/designSystem'
 
 export default function HomePage() {
-  const { user } = useUserContext()
   const [description, setDescription] = useState('')
   const [selectedTopic, setSelectedTopic] = useState('')
 
@@ -60,7 +59,7 @@ export default function HomePage() {
             generatedPrompt: result.answer,
             isFavorite: false,
             topic: selectedTopic,
-            userId: user?.id as string,
+            userId: user.id,
           },
         })
         message.success('Prompt generated successfully!')
@@ -97,7 +96,7 @@ export default function HomePage() {
             <div>
               <Text strong>Available Credits: </Text>
               <Text type="success">
-                {subscription?.plan?.credits?.toString() || '0'} prompts
+                {subscription?.plan?.credits || '0'} prompts
               </Text>
             </div>
 

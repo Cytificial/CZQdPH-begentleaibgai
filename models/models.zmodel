@@ -17,6 +17,8 @@ model User {
     // this is the role of the user for the application
     globalRole       String         @default('USER')
     password         String?        @password @omit
+    hasUnlimitedCredits Boolean     @default(false)
+    credits          Int           @default(3)
     createdAt        DateTime       @default(now())
     updatedAt        DateTime       @updatedAt @default(now())
 
