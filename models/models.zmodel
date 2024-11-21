@@ -36,12 +36,12 @@ model User {
 
 model SubscriptionPlan {
 
-    id                  String         @id @default(uuid())
-    name                String
-    price               String
-    credits             Float
+    id                  String         @id @default('free-plan')
+    name                String         @default('Free Plan')
+    price               String         @default('0')
+    credits             Float          @default(3)
     features            Json?
-    duration            Float
+    duration            Float          @default(30)
 
     subscriptionsAsPlan Subscription[] @relation("plan")
     createdAt           DateTime       @default(now())

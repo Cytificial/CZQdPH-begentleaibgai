@@ -9,6 +9,7 @@ import {
   Space,
   Row,
   Col,
+  Spin,
 } from 'antd'
 import { useState } from 'react'
 const { Title, Text, Paragraph } = Typography
@@ -25,9 +26,25 @@ export default function HomePage() {
   const [selectedTopic, setSelectedTopic] = useState('')
 
   // Queries
-  const { data: subscription } = Api.subscription.findFirst.useQuery({
+  const { data: subscription, isLoading: isLoadingSubscription, error: subscriptionError, refetch: refetchSubscription } = Api.subscription.findFirst.useQuery({
     where: { userId: user?.id },
     include: { plan: true },
+  }, {
+    onSuccess: async (data) => {
+      if (!data) {
+        await createSubscription.mutateAsync({
+          data: {
+            userId: user?.id as string,
+            planId: 'free-plan',
+            startDate: new Date().toISOString(),
+            endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+            status: 'active'
+          }
+        })
+        await refetchSubscription()
+        message.success('You have been granted 3 free credits!')
+      }
+    }
   })
 
   const { data: prompts } = Api.prompt.findMany.useQuery({
@@ -40,6 +57,7 @@ export default function HomePage() {
   // Mutations
   const { mutateAsync: generatePrompt } = Api.ai.generateText.useMutation()
   const { mutateAsync: createPrompt } = Api.prompt.create.useMutation()
+  const { mutateAsync: createSubscription } = Api.subscription.create.useMutation()
 
   const handleGeneratePrompt = async () => {
     if (!description) {
@@ -92,6 +110,7 @@ export default function HomePage() {
         </div>
 
         <Card>
+<<<<<<< Updated upstream
           <Space direction="vertical" size="middle" style={{ width: '100%' }}>
             <div>
               <Text strong>Available Credits: </Text>
@@ -100,13 +119,36 @@ export default function HomePage() {
               </Text>
             </div>
 
+=======
+          <div 
+            style={{ 
+              border: '1px solid #d9d9d9',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '16px'
+            }}
+          >
+            <Title level={4} style={{ margin: 0 }}>
+              Credits: {' '}
+              {isLoadingSubscription ? (
+                <Spin size="small" />
+              ) : subscriptionError ? (
+                <Text type="danger">Error loading credits</Text>
+              ) : (
+                <Text type="success" style={{ fontSize: '24px' }}>
+                  {user?.globalRole === 'ADMIN' ? 'Unlimited' : subscription?.plan?.credits}
+                </Text>
+              )}
+            </Title>
+          </div>
+          <Space direction="vertical" style={{width: '100%'}}>
+>>>>>>> Stashed changes
             <TextArea
               value={description}
               onChange={e => setDescription(e.target.value)}
               placeholder="Describe what you want to generate..."
               rows={4}
             />
-
             <Button type="primary" onClick={handleGeneratePrompt} block>
               <i className="las la-magic" /> Generate Prompt
             </Button>
