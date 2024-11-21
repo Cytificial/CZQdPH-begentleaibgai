@@ -23,21 +23,23 @@ enum UserStatus {
 /// @@allow('create', globalRole != 'ADMIN')
 /// @@allow('read', true)
 model User {
-  id               String         @id() @default(uuid())
-  name             String?
-  email            String?        @unique()
-  pictureUrl       String?        @default("https://i.imgur.com/ZdJSK3Y.jpeg")
-  tokenInvitation  String?
-  stripeCustomerId String?
-  status           UserStatus     @default(VERIFIED)
-  globalRole       String         @default("USER")
+  id                  String         @id() @default(uuid())
+  name                String?
+  email               String?        @unique()
+  pictureUrl          String?        @default("https://i.imgur.com/ZdJSK3Y.jpeg")
+  tokenInvitation     String?
+  stripeCustomerId    String?
+  status              UserStatus     @default(VERIFIED)
+  globalRole          String         @default("USER")
   /// @password
   /// @omit
-  password         String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @default(now()) @updatedAt()
-  subscriptions    Subscription[] @relation("user")
-  prompts          Prompt[]       @relation("user")
+  password            String?
+  hasUnlimitedCredits Boolean        @default(false)
+  credits             Int            @default(3)
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @default(now()) @updatedAt()
+  subscriptions       Subscription[] @relation("user")
+  prompts             Prompt[]       @relation("user")
 }
 
 /// @@allow('all', true)
