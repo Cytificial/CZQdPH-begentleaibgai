@@ -47,6 +47,7 @@ class Provider {
                   email,
                   name: profile.displayName,
                   pictureUrl: profile.photos[0].value,
+                  password: null // explicitly set password as null for Google OAuth users
                 },
               })
             }
